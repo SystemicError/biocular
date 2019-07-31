@@ -16,8 +16,13 @@
     (edn/read-string coord-pairs)))
 
 (defn add-coord-pair []
-  (let [coord-pairs (read-coord-pairs)]
-    (set! (.-value (.getElementById js/document "coord-pairs")) (str (cons [1 1] coord-pairs)))))
+  (let [coord-pairs (read-coord-pairs)
+        left-pair (edn/read-string (.-value (.getElementById js/document "left-photo-text")))
+        right-pair (edn/read-string (.-value (.getElementById js/document "right-photo-text")))]
+    (set! (.-value (.getElementById js/document "coord-pairs")) (str (cons [left-pair right-pair] 
+                                                                           (if coord-pairs
+                                                                             coord-pairs
+                                                                             []))))))
 
 (defn set-coords [id-str event]
   "Sets a pair of coordinates for the specified photo."
@@ -30,6 +35,8 @@
         dummy (js/console.log (str x ", " y))]
     (set! (.-value coord-text) (str [x y]))
     ))
+
+(set! (.-onclick (.getElementById js/document "add-coord-pair")) add-coord-pair)
 
 (set! (.-onclick (.getElementById js/document "left-photo")) (partial set-coords "left-photo"))
 (set! (.-onclick (.getElementById js/document "right-photo")) (partial set-coords "right-photo"))
