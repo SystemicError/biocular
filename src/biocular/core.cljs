@@ -41,13 +41,24 @@
     (set! (.-value coord-text) (str [x-from-center y-from-center]))
     ))
 
-(defn triangulate [pair focal-length]
+(defn triangulate [pair focal-length separation]
   "Takes in :y :left-x :right-x  focal-length (in pixels) and triangulates location with respect to left camera."
-  (let [azimuth-left nil
-        azimuth-right nil
-        elevation nil
-        distance-left nil]
-  ))
+  (let [left-x (:left-x pair)
+        right-x (:right-x pair)
+        scale (/ separation (+ left-x right-x))
+        x (* scale left-x) ; with respect to left camera
+        z (* scale focal-length) ; depth in front of camera
+        y (* (:y pair) scale)]
+    [x y z]))
+
+(defn get-focal-length []
+  (edn/read-string (.-value (.getElementById js/document "focal-length"))))
+
+(defn get-separation []
+  (edn/read-string (.-value (.getElementById js/document "separation"))))
+
+(defn generate-model []
+  )
 
 (set! (.-onclick (.getElementById js/document "add-coord-pair")) add-coord-pair)
 
