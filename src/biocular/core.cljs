@@ -10,13 +10,13 @@
         filepath (.-value (.getElementById js/document (str id-str "-file")))]
     (set! (.-src photo) filepath)))
 
-(defn read-coord-pairs []
+(defn get-coord-pairs []
   "Returns a list of all coordinate pairs."
   (let [coord-pairs (.-value (.getElementById js/document "coord-pairs"))]
     (edn/read-string coord-pairs)))
 
 (defn add-coord-pair []
-  (let [coord-pairs (read-coord-pairs)
+  (let [coord-pairs (get-coord-pairs)
         left-pair (edn/read-string (.-value (.getElementById js/document "left-photo-text")))
         right-pair (edn/read-string (.-value (.getElementById js/document "right-photo-text")))
         new-pair {:y (/ (+ (nth left-pair 1) (nth right-pair 1)) 2)
@@ -31,21 +31,20 @@
   "Sets a pair of coordinates for the specified photo."
   (let [coord-text (.getElementById js/document (str id-str "-text"))
         photo (.getElementById js/document id-str)
-        dummy (js/console.log (str id-str "offsetleft" (.-offsetLeft photo)))
         bounding-rect (.getBoundingClientRect photo)
         x (- (.-pageX event) (.-left bounding-rect))
         y (- (.-pageY event) (.-top bounding-rect))
         x-from-center (- x (/ (.-width photo) 2.0))
-        y-from-center (- y (/ (.-height photo) 2.0))
-        dummy (js/console.log (str x-from-center ", " y-from-center))]
+        y-from-center (- y (/ (.-height photo) 2.0))]
     (set! (.-value coord-text) (str [x-from-center y-from-center]))
     ))
 
 (defn triangulate [pair focal-length separation]
-  "Takes in :y :left-x :right-x  focal-length (in pixels) and triangulates location with respect to left camera."
-  (let [left-x (:left-x pair)
-        right-x (:right-x pair)
-        scale (/ separation (+ left-x right-x))
+  "Takes in :y :x-left :x-right  focal-length (in pixels) and triangulates location with respect to left camera."
+  (let [left-x (:x-left pair)
+        right-x (:x-right pair)
+        scale (/ separation (- left-x right-x))
+        dummy (js/console.log (str "fl,sep,scale = " focal-length ", " separation ", " scale))
         x (* scale left-x) ; with respect to left camera
         z (* scale focal-length) ; depth in front of camera
         y (* (:y pair) scale)]
@@ -58,8 +57,16 @@
   (edn/read-string (.-value (.getElementById js/document "separation"))))
 
 (defn generate-model []
-  )
+  "Generate a model based on coord pairs."
+  (let [coord-pairs (get-coord-pairs)
+        focal-length (get-focal-length)
+        separation (get-separation)
+        dummy (js/console.log (str "fl,s = " focal-length ", " separation))
+        model (map #(triangulate % focal-length separation) coord-pairs)
+        model-coords (.getElementById js/document "model-coords")]
+    (set! (.-value model-coords) model)))
 
+(set! (.-onclick (.getElementById js/document "generate-model")) generate-model)
 (set! (.-onclick (.getElementById js/document "add-coord-pair")) add-coord-pair)
 
 (set! (.-onclick (.getElementById js/document "left-photo")) (partial set-coords "left-photo"))
