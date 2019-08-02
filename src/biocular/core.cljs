@@ -18,8 +18,11 @@
 (defn add-coord-pair []
   (let [coord-pairs (read-coord-pairs)
         left-pair (edn/read-string (.-value (.getElementById js/document "left-photo-text")))
-        right-pair (edn/read-string (.-value (.getElementById js/document "right-photo-text")))]
-    (set! (.-value (.getElementById js/document "coord-pairs")) (str (cons [left-pair right-pair] 
+        right-pair (edn/read-string (.-value (.getElementById js/document "right-photo-text")))
+        new-pair {:y (/ (+ (nth left-pair 1) (nth right-pair 1)) 2)
+                  :x-left (first left-pair)
+                  :x-right (first right-pair)}]
+    (set! (.-value (.getElementById js/document "coord-pairs")) (str (cons new-pair 
                                                                            (if coord-pairs
                                                                              coord-pairs
                                                                              []))))))
@@ -32,9 +35,19 @@
         bounding-rect (.getBoundingClientRect photo)
         x (- (.-pageX event) (.-left bounding-rect))
         y (- (.-pageY event) (.-top bounding-rect))
-        dummy (js/console.log (str x ", " y))]
-    (set! (.-value coord-text) (str [x y]))
+        x-from-center (- x (/ (.-width photo) 2.0))
+        y-from-center (- y (/ (.-height photo) 2.0))
+        dummy (js/console.log (str x-from-center ", " y-from-center))]
+    (set! (.-value coord-text) (str [x-from-center y-from-center]))
     ))
+
+(defn triangulate [pair focal-length]
+  "Takes in :y :left-x :right-x  focal-length (in pixels) and triangulates location with respect to left camera."
+  (let [azimuth-left nil
+        azimuth-right nil
+        elevation nil
+        distance-left nil]
+  ))
 
 (set! (.-onclick (.getElementById js/document "add-coord-pair")) add-coord-pair)
 
