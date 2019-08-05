@@ -56,6 +56,32 @@
 (defn get-separation []
   (edn/read-string (.-value (.getElementById js/document "separation"))))
 
+(defn draw-points [ctx points center]
+  "Draws points on the canvas"
+  (if (> (count points) 0)
+    (let [coord (first points)
+          x (first coord)
+          y (nth coord 1)
+          z (nth coord 2)
+          cx (:x center)
+          cy (:y center)]
+      (.beginPath ctx)
+      (.arc ctx (+ cx x) (+ cy y) (/ 1000.0 z) 0 6.28)
+      (js/console.log (str "x,y" x ", " y "\n"
+                           "cx,cy" cx ", " cy "\n"
+                           "cx+x,cy+y" (+ cx x) ", " (+ cy y)))
+      (.fill ctx)
+      (recur ctx (rest points) center))))
+
+(defn draw-model [model]
+  "Draws the 3d model on the canvas."
+  (let [canvas (.getElementById js/document "model-canvas")
+        ctx (.getContext canvas "2d")
+        w (.-width canvas)
+        h (.-height canvas)]
+    (.clearRect ctx 0 0 w h)
+    (draw-points ctx model {:x (/ w 2.0) :y (/ h 2.0)})))
+
 (defn generate-model []
   "Generate a model based on coord pairs."
   (let [coord-pairs (get-coord-pairs)
@@ -64,7 +90,9 @@
         dummy (js/console.log (str "fl,s = " focal-length ", " separation))
         model (map #(triangulate % focal-length separation) coord-pairs)
         model-coords (.getElementById js/document "model-coords")]
-    (set! (.-value model-coords) model)))
+    (set! (.-value model-coords) model)
+    (draw-model model)))
+
 
 (set! (.-onclick (.getElementById js/document "generate-model")) generate-model)
 (set! (.-onclick (.getElementById js/document "add-coord-pair")) add-coord-pair)
